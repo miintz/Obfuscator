@@ -7,10 +7,11 @@ void ofApp::setup(){
     camWidth = CAM_WIDTH;
     camHeight = CAM_HEIGHT;
 	vidGrabber.setVerbose(true);
+
 	//vidGrabber.listDevices();
 	vidGrabber.initGrabber(camWidth,camHeight);
 
-		//vidGrabber.videoSettings();
+	//vidGrabber.videoSettings();
 
     // SETUP FACE DETECTION
 	img.loadImage("test.jpg");
@@ -68,46 +69,33 @@ void ofApp::update(){
 
 	vidGrabber.update();
 
-	if (vidGrabber.isFrameNew()){
+	if (vidGrabber.isFrameNew())
+	{
 		unsigned char * pixels = vidGrabber.getPixels();
-//		videoTexture.loadData(pixels, camWidth, camHeight, OF_IMAGE_COLOR);
-//		if(bgSubtract) {
-//		    for(int x=0; x<camWidth; x++)
-//                for(int y=0; y<camHeight; y++)
-//                    if ((((pixels[(x+y*camWidth)*3] - bgImage.getPixels()[(x+y*camWidth)*3])*
-//                        (pixels[(x+y*camWidth)*3] - bgImage.getPixels()[(x+y*camWidth)*3])) +
-//                       ((pixels[(x+y*camWidth)*3+1] - bgImage.getPixels()[(x+y*camWidth)*3+1])*
-//                       (pixels[(x+y*camWidth)*3+1] - bgImage.getPixels()[(x+y*camWidth)*3+1]))+
-//                       ((pixels[(x+y*camWidth)*3+2] - bgImage.getPixels()[(x+y*camWidth)*3+2])*
-//                       (pixels[(x+y*camWidth)*3+2] - bgImage.getPixels()[(x+y*camWidth)*3+2]))) < 100.0) {
-//                           pixels[(x+y*camWidth)*3]=0;
-//                           pixels[(x+y*camWidth)*3+1]=0;
-//                           pixels[(x+y*camWidth)*3+2]=0;
-//                       }
-//		}
 	
 		img.setFromPixels(pixels, camWidth, camHeight, OF_IMAGE_COLOR, true);
 		test_image.setFromPixels(pixels, camWidth, camHeight, OF_IMAGE_COLOR);
         test_image.resize(camWidth/TEST_DIV, camHeight/TEST_DIV);
         test_image.update();
         finder.findHaarObjects(test_image);
-        //finder.findHaarObjects(img);
+        
+		//finder.findHaarObjects(img);
 	}
 
 }
 
 void ofApp::draw(){
-    // draw current video frame to screen
+    // draw current video frame to screen (need to change img before drawing or after?)
 	img.draw(0, 0, camWidth*SCALE, camHeight*SCALE);
 
-    // display other items
+    // display other items (no idea what this is?)
     if(showTest) test_image.draw(camWidth*SCALE +100, 0);
 	if(showFaces) rec.drawFaces(0, ofGetHeight()*0.8, ofGetWidth());
 	if(showEigens) rec.drawEigens(0, ofGetHeight()*0.9, ofGetWidth());
 
-    int person=-1;
+	//hm ok
+    int person = -1;
 
-//    if(bgSubtract) bgImage.draw(0, 400);
     std::ostringstream fr;
     std::ostringstream o;
 
@@ -118,8 +106,6 @@ void ofApp::draw(){
         cur.y*=TEST_DIV;
         cur.width*=TEST_DIV;
         cur.height*=TEST_DIV;
-
-//		face.grabScreen(cur.x, cur.y, cur.width, cur.height);
 
         int tx=cur.x;
         int ty=cur.y;
@@ -148,6 +134,7 @@ void ofApp::draw(){
             for(int y=0; y<PCA_HEIGHT; y++)
                 if(mask.getPixels()[x+y*PCA_HEIGHT]<=0)
                     pixels[x+y*PCA_HEIGHT]=128;
+
         gray = pixels;
 
         person=rec.recognize(gray);
