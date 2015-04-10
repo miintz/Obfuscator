@@ -1,4 +1,3 @@
-ofxGui
 ofxNetwork
 ofxOpenCv
 ofxSvg
