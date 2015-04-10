@@ -19,7 +19,8 @@ x64/
 x86/
 build/
 bld/
-[Bb]in/
+[Bb]in/*
+![Bb]in/data
 [Oo]bj/
 
 # Visual Studo 2015 cache/options directory
