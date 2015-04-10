@@ -2,6 +2,12 @@
 
 #include "ofMain.h"
 #include "ofxCvHaarFinder.h"
+#include "ofxCvFaceRec.h"
+
+#define SCALE 2
+#define TEST_DIV 2
+#define CAM_WIDTH 640
+#define CAM_HEIGHT 480
 
 class ofApp : public ofBaseApp{
 
@@ -9,38 +15,38 @@ class ofApp : public ofBaseApp{
 		void setup();
 		void update();
 		void draw();
-		void drawScene(bool isPreview);
 
-		void keyPressed(int key);
-		void keyReleased(int key);
-		void mouseMoved(int x, int y );
-		void mouseDragged(int x, int y, int button);
-		void mousePressed(int x, int y, int button);
-		void mouseReleased(int x, int y, int button);
-		void windowResized(int w, int h);
-		void dragEvent(ofDragInfo dragInfo);
-		void gotMessage(ofMessage msg);
+		void keyPressed  (int key);
+		void keyReleased  (int key);
+        void calcFaceSprites();
 
-		ofTexture videoTexture;
-		ofImage image;
+		ofImage img;
+		ofImage test_image;
+		ofImage bgImage;
+		ofImage mask;
+		unsigned char *mask_pixels;
 
-		ofVideoGrabber video;
 		ofxCvHaarFinder finder;
+        ofxCvFaceRec rec;
 
-		//the view window is defined by 3 corners
-		ofVec3f windowTopLeft;
-		ofVec3f windowBottomLeft;
-		ofVec3f windowBottomRight;
-		ofCamera headTrackedCamera;
-		ofEasyCam previewCamera;
+        ofVideoGrabber vidGrabber;
+		ofTexture videoTexture;
+		int camWidth;
+		int camHeight;
 
-		bool usePreview;
-		float windowWidth;
-		float windowHeight;
-		float viewerDistance;
+		ofImage face;
+        ofxCvColorImage color;
+        ofxCvGrayscaleImage gray;
 
-		deque<ofPoint> headPositionHistory;
+        vector <ofImage> faces;
 
-		ofVboMesh window;
-		
+    private:
+        // vars to toggle onscreen display
+        bool showEigens;
+        bool showFaces;
+        bool showExtracted;
+        bool showTest;
+        bool showLeastSq;
+        bool bgSubtract;
+        bool showClock;
 };

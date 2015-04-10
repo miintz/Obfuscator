@@ -3,163 +3,223 @@
 
 //--------------------------------------------------------------
 void ofApp::setup(){
-    image.loadImage("H.png");
+    // SETUP VIDEO INPUT
+    camWidth = CAM_WIDTH;
+    camHeight = CAM_HEIGHT;
+	vidGrabber.setVerbose(true);
+	//vidGrabber.listDevices();
+	vidGrabber.initGrabber(camWidth,camHeight);
 
-	ofEnableSmoothing();
-	ofSetVerticalSync(true);
+		//vidGrabber.videoSettings();
 
-	video.initGrabber(640, 480);
-
+    // SETUP FACE DETECTION
+	img.loadImage("test.jpg");
 	finder.setup("haarcascade_frontalface_default.xml");
-	usePreview = false;
+	finder.findHaarObjects(img);
 
-	previewCamera.setDistance(3.0f);
-	previewCamera.setNearClip(0.01f);
-	previewCamera.setFarClip(500.0f);
-	previewCamera.setPosition(0.4f, 0.2f, 0.8f);
-	previewCamera.lookAt(ofVec3f(0.0f, 0.0f, 0.0f));
+	mask.loadImage("mask.png");
+    mask.resize(PCA_WIDTH, PCA_HEIGHT);
+    mask_pixels = mask.getPixels();
 
-	headTrackedCamera.setNearClip(0.01f);
-	headTrackedCamera.setFarClip(1000.0f);
+    // SETUP FACE RECOGNITION
+    rec.learn();
+    gray.allocate(PCA_WIDTH, PCA_HEIGHT);
+    color.allocate(PCA_WIDTH, PCA_HEIGHT);
 
-	//defining the real world coordinates of the window which is being headtracked is important for visual accuracy
-	windowWidth = 0.3f;
-	windowHeight = 0.2f;
+    // PRECALCULATE TRANSLUCENT FACE SPRITES
+    calcFaceSprites();
 
-	windowTopLeft = ofVec3f(-windowWidth / 2.0f,
-							+windowHeight / 2.0f,
-							0.0f);
-	windowBottomLeft = ofVec3f(-windowWidth / 2.0f,
-							   - windowHeight / 2.0f,
-							   0.0f);
-	windowBottomRight = ofVec3f(+windowWidth / 2.0f,
-								-windowHeight / 2.0f,
-								0.0f);
+    showEigens=false;
+    showFaces=false;
+    showExtracted=false;
+    showTest = false;
+    showLeastSq=false;
+    showClock=false;
+    bgSubtract=false;
 
-	//we use this constant since we're using a really hacky headtracking in this example
-	//if you use something that can properly locate the head in 3d (like a kinect), you don't need this fudge factor
-	viewerDistance = 0.4f;
-	videoTexture.allocate(640,480, GL_RGB);
+    ofBackground(0,0,0);
+    ofEnableAlphaBlending();
+    ofHideCursor();
+
 }
 
-//--------------------------------------------------------------
+void ofApp::calcFaceSprites() {
+    if(!rec.isTrained()) return;
+
+    for (int i=0; i<rec.numPeople(); i++) {
+        ofImage masked;
+
+        unsigned char* pixels = rec.getPersonPixels(i);
+        unsigned char* rgba_pixels = new unsigned char[4*PCA_WIDTH*PCA_HEIGHT];
+        for(int x=0; x<PCA_WIDTH; x++)
+            for(int y=0; y<PCA_HEIGHT; y++) {
+                rgba_pixels[(x+(y*PCA_WIDTH))*4] = pixels[(x+(y*PCA_WIDTH))*3];
+                rgba_pixels[(x+(y*PCA_WIDTH))*4+1] = pixels[(x+(y*PCA_WIDTH))*3+1];
+                rgba_pixels[(x+(y*PCA_WIDTH))*4+2] = pixels[(x+(y*PCA_WIDTH))*3+2];
+                rgba_pixels[(x+(y*PCA_WIDTH))*4+3] = mask_pixels[x+y*PCA_WIDTH];
+            }
+        masked.setFromPixels(rgba_pixels, PCA_WIDTH, PCA_HEIGHT, OF_IMAGE_COLOR_ALPHA);
+        faces.push_back(masked);
+        delete rgba_pixels;
+    };
+}
+
 void ofApp::update(){
-	video.update();
-	finder.findHaarObjects(video.getPixelsRef());
 
-	ofVec3f headPosition(0,0,viewerDistance);
+	vidGrabber.update();
 
-	if (finder.blobs.size() > 0) {
-		//get the head position in camera pixel coordinates
-		const ofxCvBlob & blob = finder.blobs.front();
-		float cameraHeadX = blob.centroid.x;
-		float cameraHeadY = blob.centroid.y;
-
-		//do a really hacky interpretation of this, really you should be using something better to find the head (e.g. kinect skeleton tracking)
-
-		//since camera isn't mirrored, high x in camera means -ve x in world
-		float worldHeadX = ofMap(cameraHeadX, 0, video.getWidth(), windowBottomRight.x, windowBottomLeft.x);
-
-		//low y in camera is +ve y in world
-		float worldHeadY = ofMap(cameraHeadY, 0, video.getHeight(), windowTopLeft.y, windowBottomLeft.y);
-
-		//set position in a pretty arbitrary way
-		headPosition = ofVec3f(worldHeadX, worldHeadY, viewerDistance);
-	} else {
-		if (!video.isInitialized()) {
-			//if video isn't working, just make something up
-			headPosition = ofVec3f(0.5f * windowWidth * sin(ofGetElapsedTimef()), 0.5f * windowHeight * cos(ofGetElapsedTimef()), viewerDistance);
-		}
+	if (vidGrabber.isFrameNew()){
+		unsigned char * pixels = vidGrabber.getPixels();
+//		videoTexture.loadData(pixels, camWidth, camHeight, OF_IMAGE_COLOR);
+//		if(bgSubtract) {
+//		    for(int x=0; x<camWidth; x++)
+//                for(int y=0; y<camHeight; y++)
+//                    if ((((pixels[(x+y*camWidth)*3] - bgImage.getPixels()[(x+y*camWidth)*3])*
+//                        (pixels[(x+y*camWidth)*3] - bgImage.getPixels()[(x+y*camWidth)*3])) +
+//                       ((pixels[(x+y*camWidth)*3+1] - bgImage.getPixels()[(x+y*camWidth)*3+1])*
+//                       (pixels[(x+y*camWidth)*3+1] - bgImage.getPixels()[(x+y*camWidth)*3+1]))+
+//                       ((pixels[(x+y*camWidth)*3+2] - bgImage.getPixels()[(x+y*camWidth)*3+2])*
+//                       (pixels[(x+y*camWidth)*3+2] - bgImage.getPixels()[(x+y*camWidth)*3+2]))) < 100.0) {
+//                           pixels[(x+y*camWidth)*3]=0;
+//                           pixels[(x+y*camWidth)*3+1]=0;
+//                           pixels[(x+y*camWidth)*3+2]=0;
+//                       }
+//		}
+	
+		img.setFromPixels(pixels, camWidth, camHeight, OF_IMAGE_COLOR, true);
+		test_image.setFromPixels(pixels, camWidth, camHeight, OF_IMAGE_COLOR);
+        test_image.resize(camWidth/TEST_DIV, camHeight/TEST_DIV);
+        test_image.update();
+        finder.findHaarObjects(test_image);
+        //finder.findHaarObjects(img);
 	}
-
-	headPositionHistory.push_back(headPosition);
-	while (headPositionHistory.size() > 50.0f){
-		headPositionHistory.pop_front();
-	}
-
-	//these 2 lines of code must be called every time the head position changes
-	headTrackedCamera.setPosition(headPosition);
-	headTrackedCamera.setupOffAxisViewPortal(windowTopLeft, windowBottomLeft, windowBottomRight);
-}
-
-//--------------------------------------------------------------
-void ofApp::drawScene(bool isPreview){
 
 }
 
-//--------------------------------------------------------------
 void ofApp::draw(){
+    // draw current video frame to screen
+	img.draw(0, 0, camWidth*SCALE, camHeight*SCALE);
 
-	ofBackgroundGradient(ofColor(50), ofColor(0));
+    // display other items
+    if(showTest) test_image.draw(camWidth*SCALE +100, 0);
+	if(showFaces) rec.drawFaces(0, ofGetHeight()*0.8, ofGetWidth());
+	if(showEigens) rec.drawEigens(0, ofGetHeight()*0.9, ofGetWidth());
 
-	if (usePreview){
-		//previewCamera.begin();
-	}
-	else{
-		headTrackedCamera.begin();
-	}
+    int person=-1;
 
-	//drawScene(usePreview);
+//    if(bgSubtract) bgImage.draw(0, 400);
+    std::ostringstream fr;
+    std::ostringstream o;
 
-	if (usePreview){
-		//previewCamera.end();
-	}
-	else{
-		headTrackedCamera.end();
-	}
-	//
-	//------
-	//videoTexture.draw(20,20);
-
-	//videoTexture.draw(20+640,20,640,480);
-
-
-	//------
-	//draw some overlays
-	//
-	video.draw(0, 0);
-	video.draw(640,0,640,480);
-	ofPushStyle();
-	ofNoFill();
-	for(unsigned int i = 0; i < finder.blobs.size(); i++) {
+	for(int i = 0; i < finder.blobs.size(); i++) {
 		ofRectangle cur = finder.blobs[i].boundingRect;
-		ofRect(cur.x, cur.y, cur.width, cur.height);
-		image.draw( cur.x, cur.y,cur.width, cur.height );
+
+        cur.x*=TEST_DIV;
+        cur.y*=TEST_DIV;
+        cur.width*=TEST_DIV;
+        cur.height*=TEST_DIV;
+
+//		face.grabScreen(cur.x, cur.y, cur.width, cur.height);
+
+        int tx=cur.x;
+        int ty=cur.y;
+        int tw=cur.width;
+        int th=cur.height;
+
+        unsigned char *img_px = img.getPixels();
+
+		unsigned char *temp = new unsigned char[tw*th*3];
+		for (int x=0; x<tw; x++)
+            for (int y=0; y<th; y++) {
+                temp[(x+y*tw)*3] = img_px[((x+tx)+(y+ty)*camWidth)*3];
+                temp[(x+y*tw)*3+1] = img_px[((x+tx)+(y+ty)*camWidth)*3+1];
+                temp[(x+y*tw)*3+2] = img_px[((x+tx)+(y+ty)*camWidth)*3+2];
+            }
+        face.setFromPixels(temp, cur.width, cur.height, OF_IMAGE_COLOR);
+        delete temp;
+
+        face.resize(PCA_WIDTH, PCA_HEIGHT);
+        //face.update();
+        color = face.getPixels();
+        gray = color;
+
+        unsigned char *pixels = gray.getPixels();
+        for(int x=0; x<PCA_WIDTH; x++)
+            for(int y=0; y<PCA_HEIGHT; y++)
+                if(mask.getPixels()[x+y*PCA_HEIGHT]<=0)
+                    pixels[x+y*PCA_HEIGHT]=128;
+        gray = pixels;
+
+        person=rec.recognize(gray);
+
+        ofSetColor(255, 255, 255, 192);
+
+        if(showExtracted) gray.draw(1120, 25+i*225);
+
+        // super-impose matched face over detected face
+        faces[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);
+
+        // show fit data
+        if(showLeastSq) {
+            o << rec.getLeastDistSq();
+            ofDrawBitmapString(o.str(), cur.x*SCALE, cur.y*SCALE);
+        }
+
+        // show timing
+        if (showClock) {
+            fr << ofGetFrameRate();
+            ofDrawBitmapString(fr.str(), 20, 20);
+        }
+
+        // highlight current face from board of faces
+        if(showFaces) rec.drawHilight(person, 0, ofGetHeight()*0.8, ofGetWidth());
+
+        // reset color
+        ofSetColor(255, 255, 255, 255);
 	}
-	ofPopStyle();
-
-	//stringstream message;
-	//message << "[SPACE] = User preview camera [" << (usePreview ? 'x' : ' ') << "]";
-
-	//ofDrawBitmapString(message.str(), video.getWidth() + 10, 20);
-
-	if (usePreview){
-		ofRectangle bottomLeft(0, ofGetHeight() - 200.0f, 300.0f, 200.0f);
-
-		ofPushStyle();
-		ofSetColor(0);
-		ofRect(bottomLeft);
-		ofPopStyle();
-
-		headTrackedCamera.begin(bottomLeft);
-		//drawScene(false);
-		headTrackedCamera.end();
-	}
-	//
-	//------
 
 }
 
-//--------------------------------------------------------------
-void ofApp::keyPressed(int key){
 
-}
+void ofApp::keyPressed  (int key){
+
+    if(key == 's')
+        face.saveImage("face.tif");
+
+    if (key == 'S') {
+        ofImage screengrab;
+        screengrab.grabScreen(0, 0, ofGetWidth(), ofGetHeight());
+        screengrab.saveImage("screen.tif");
+    };
+
+    if((key == 'e') || (key == 'E'))
+        showEigens = (showEigens == false);
+
+    if((key == 'f') || (key == 'F'))
+        showFaces = (showFaces == false);
+
+    if((key == 't') || (key == 'T'))
+        showTest = (showTest == false);
+
+//    if((key == 'f') || (key == 'F'))
+//        showExtracted = (showExtracted == false);
+
+    if((key == 'l') || (key == 'L'))
+        showLeastSq = (showLeastSq == false);
+
+//    if(((key == 'b') || (key == 'B')) && (!bgSubtract)) {
+//        bgImage.setFromPixels(img.getPixels(), camWidth, camHeight, OF_IMAGE_COLOR);
+//        bgSubtract = true;
+//    }
+
+    }
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
 
 }
 
+/*
 //--------------------------------------------------------------
 void ofApp::mouseMoved(int x, int y ){
 
@@ -194,3 +254,4 @@ void ofApp::gotMessage(ofMessage msg){
 void ofApp::dragEvent(ofDragInfo dragInfo){
 
 }
+*/
