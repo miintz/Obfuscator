@@ -1,0 +1,23 @@
+To view the current status of the repo (i.e. if you have pending changes or something)
+git status
+
+To view the commit history and get commit hashcodes (useful for reverting stuff, use the Q key to get out of the list if you see : at the bottom of screen)
+git log
+
+To pull the repo
+git pull
+
+To add files to a new commit do the following
+git add SomeDirectory/SomeFile.ccp 
+
+You can add multiple files by using hotcards such as * and . or by just adding more paths like so: git add SomeDir/SomeFile1.ccp SomeDir/SomeFile.h
+
+Now you need to create a "commit" by doing this:
+git commit -m "yourname: your message"
+
+Use the -m flag to add a message, i like to add my  name to the message and the general gist of the changes, easy to keep track of shit that way
+
+Now you can push the commit by doing this
+git push
+
+Now you should be set, if you get errors, read them carefully as they are very descriptive :-)
