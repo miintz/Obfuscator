@@ -3,11 +3,14 @@
 #include "ofMain.h"
 #include "ofxCvHaarFinder.h"
 #include "ofxCvFaceRec.h"
+#include "RandomStringShenanigans.h"
 
 #define SCALE 2
 #define TEST_DIV 2
 #define CAM_WIDTH 640
 #define CAM_HEIGHT 480
+
+#include <string>
 
 class ofApp : public ofBaseApp{
 
@@ -42,6 +45,8 @@ class ofApp : public ofBaseApp{
 		//ofShader shader; //Shader
 	//ofFbo fbo; //Buffer for intermediate drawing
 	//ofImage image;
+
+		RandomStringShenanigans RandString;
 
     private:
         // vars to toggle onscreen display

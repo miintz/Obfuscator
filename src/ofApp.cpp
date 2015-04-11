@@ -1,5 +1,10 @@
 #include "ofApp.h"
 
+#include <iostream>
+#include <string>
+#include <cstdlib>
+#include <ctime>
+using namespace std;
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -13,9 +18,7 @@ void ofApp::setup(){
 
 	//vidGrabber.listDevices();
 	vidGrabber.initGrabber(camWidth,camHeight);
-
-	//vidGrabber.videoSettings();
-
+	
     // SETUP FACE DETECTION
 	img.loadImage("test.jpg");
 	finder.setup("haarcascade_frontalface_default.xml");
@@ -44,7 +47,10 @@ void ofApp::setup(){
     ofBackground(0,0,0);
     ofEnableAlphaBlending();
     ofHideCursor();
+		
+	std::string res = RandString.gen_random(2);	
 
+	cout << res << endl;
 }
 
 void ofApp::calcFaceSprites() {
@@ -71,7 +77,7 @@ void ofApp::calcFaceSprites() {
 void ofApp::update(){
 
 	vidGrabber.update();
-
+	
 	if (vidGrabber.isFrameNew())
 	{
 		unsigned char * pixels = vidGrabber.getPixels();
@@ -90,6 +96,10 @@ void ofApp::update(){
 void ofApp::draw(){
     // draw current video frame to screen (need to change img before drawing or after?)
 	img.draw(0, 0, camWidth*SCALE, camHeight*SCALE);
+
+	//get me some random stringature	
+	std::string res = RandString.gen_random(1);
+	cout << res << endl;		
 
     // display other items (no idea what this is?)
     if(showTest) test_image.draw(camWidth*SCALE +100, 0);

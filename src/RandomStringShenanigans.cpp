@@ -1,25 +1,21 @@
 #include "RandomStringShenanigans.h"
-
+#include <random>
 #include <string>
-#include <functional> //for std::function
-#include <algorithm>  //for std::generate_n
 
-using std::string;
-
-std::string getRandomString(size_t length)
-{
-	auto randchar = []() -> char
-    {
-        const char charset[] =
+std::string RandomStringShenanigans::gen_random(const int len) {
+    static const char alphanum[] =
         "0123456789"
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         "abcdefghijklmnopqrstuvwxyz";
-        const size_t max_index = (sizeof(charset) - 1);
-        return charset[ rand() % max_index ];
-    };
+	
+	char s[100] = "";
 
-    std::string str(length,0);
-    std::generate_n( str.begin(), length, randchar );
-    return str;
-}
+    for (int i = 0; i < len; ++i) {
+       s[i] = alphanum[rand() % (sizeof(alphanum) - 1)];
+    }
 
+    s[len] = 0;
+	std::string str(s);
+
+	return str;
+ }

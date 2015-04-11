@@ -45,6 +45,7 @@
     <GenerateManifest>true</GenerateManifest>
     <IncludePath>C:\Program Files %28x86%29\Microsoft Visual Studio 11.0\VC\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Program Files %28x86%29\Microsoft Visual Studio 11.0\VC\lib;$(LibraryPath)</LibraryPath>
+    <SourcePath>C:\Program Files %28x86%29\Microsoft Visual Studio 11.0\VC\crt\src;$(SourcePath)</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>bin\</OutDir>

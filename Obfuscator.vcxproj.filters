@@ -67,6 +67,7 @@
     <ClCompile Include="src\RandomStringShenanigans.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\ofxCvFaceRec.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -494,6 +495,7 @@
     <ClInclude Include="src\RandomStringShenanigans.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\ofxCvFaceRec.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="icon.rc" />
