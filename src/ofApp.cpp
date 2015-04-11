@@ -3,6 +3,9 @@
 
 //--------------------------------------------------------------
 void ofApp::setup(){
+	//shader
+	//shader.load( "shaderVert.c", "shaderFrag.c" );
+	//fbo.allocate( ofGetWidth(), ofGetHeight() );
     // SETUP VIDEO INPUT
     camWidth = CAM_WIDTH;
     camHeight = CAM_HEIGHT;

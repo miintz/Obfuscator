@@ -39,6 +39,9 @@ class ofApp : public ofBaseApp{
         ofxCvGrayscaleImage gray;
 
         vector <ofImage> faces;
+		//ofShader shader; //Shader
+	//ofFbo fbo; //Buffer for intermediate drawing
+	//ofImage image;
 
     private:
         // vars to toggle onscreen display
