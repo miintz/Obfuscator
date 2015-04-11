@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Particle.h"
 #include "ofMain.h"
 #include "ofxCvHaarFinder.h"
 #include "ofxCvFaceRec.h"
@@ -21,7 +22,14 @@ class ofApp : public ofBaseApp{
 
 		void keyPressed  (int key);
 		void keyReleased  (int key);
+		
+		void resetParticles();
         void calcFaceSprites();
+		
+		int Displaying_Random_Text(cv::Mat image, char* window_name, cv::RNG rng);
+		int coin();
+
+		ofTrueTypeFont font;
 
 		ofImage img;
 		ofImage test_image;
@@ -43,10 +51,14 @@ class ofApp : public ofBaseApp{
 
         vector <ofImage> faces;
 		//ofShader shader; //Shader
-	//ofFbo fbo; //Buffer for intermediate drawing
-	//ofImage image;
+		//ofFbo fbo; //Buffer for intermediate drawing
+		//ofImage image;
 
 		RandomStringShenanigans RandString;
+
+		vector <Particle> p;		
+		vector <ofPoint> attractPoints;
+		vector <ofPoint> attractPointsWithMovement;
 
     private:
         // vars to toggle onscreen display

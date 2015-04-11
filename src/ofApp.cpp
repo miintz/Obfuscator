@@ -1,10 +1,23 @@
 #include "ofApp.h"
-
+#include "ofxOpenCv.h"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
 #include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string>
 #include <cstdlib>
 #include <ctime>
+
+using namespace cv;
 using namespace std;
+
+float textWidth;
+float textHeight;
+  
+float maxDistance;
+
+std::string text = "test";
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -46,11 +59,25 @@ void ofApp::setup(){
 
     ofBackground(0,0,0);
     ofEnableAlphaBlending();
-    ofHideCursor();
-		
-	std::string res = RandString.gen_random(2);	
+    ofHideCursor();	
 
-	cout << res << endl;
+	ofTrueTypeFont::setGlobalDpi(72);
+
+	font.loadFont("molot.ttf", 32);	
+	font.setLineHeight(18.0f);
+	font.setLetterSpacing(1.037);
+	 
+	textWidth = font.stringWidth(text);
+    textHeight = font.stringHeight(text);
+	
+	//particles 
+
+	ofSetVerticalSync(true);
+
+	int num = 15;
+	p.assign(num, Particle());
+	
+	resetParticles();
 }
 
 void ofApp::calcFaceSprites() {
@@ -91,15 +118,24 @@ void ofApp::update(){
 		//finder.findHaarObjects(img);
 	}
 
+	//update particles
+	for(unsigned int i = 0; i < p.size(); i++){
+		//p[i].setMode(currentMode);
+		p[i].update();
+	}
+	
+	//lets add a bit of movement to the attract points
+	for(unsigned int i = 0; i < attractPointsWithMovement.size(); i++){
+		attractPointsWithMovement[i].x = attractPoints[i].x + ofSignedNoise(i * 10, ofGetElapsedTimef() * 0.7) * 12.0;
+		attractPointsWithMovement[i].y = attractPoints[i].y + ofSignedNoise(i * -10, ofGetElapsedTimef() * 0.7) * 12.0;
+	}	
+
 }
 
 void ofApp::draw(){
     // draw current video frame to screen (need to change img before drawing or after?)
 	img.draw(0, 0, camWidth*SCALE, camHeight*SCALE);
 
-	//get me some random stringature	
-	std::string res = RandString.gen_random(1);
-	cout << res << endl;		
 
     // display other items (no idea what this is?)
     if(showTest) test_image.draw(camWidth*SCALE +100, 0);
@@ -177,7 +213,42 @@ void ofApp::draw(){
         // reset color
         ofSetColor(255, 255, 255, 255);
 	}
+	
+    float time = ofGetElapsedTimef();
 
+	if(fmod(time, 2.0) < 0.5) //fmod == modulo
+	{	
+		//get me some random stringature	
+		std::string res = RandString.gen_random(1);
+	
+		//draw things 
+		for(unsigned int i = 0; i < p.size(); i++){
+			//flip coin first
+			int coin = ofApp::coin();
+			if(coin == 1)
+			{
+				std::string drawer = RandString.gen_random(1);
+				p[i].draw(drawer);
+			}
+		}		
+	}
+}
+
+void ofApp::resetParticles(){
+
+	//these are the attraction points used in the forth demo 
+	attractPoints.clear();
+	for(int i = 0; i < 4; i++){
+		attractPoints.push_back( ofPoint( ofMap(i, 0, 4, 100, ofGetWidth()-100) , ofRandom(100, ofGetHeight()-100) ) );
+	}
+	
+	attractPointsWithMovement = attractPoints;
+	
+	for(unsigned int i = 0; i < p.size(); i++){
+		//p[i].setMode(currentMode);		
+		p[i].setAttractPoints(&attractPointsWithMovement);;
+		p[i].reset();
+	}	
 }
 
 
@@ -213,6 +284,15 @@ void ofApp::keyPressed  (int key){
 //    }
 
     }
+
+int ofApp::coin()
+{
+	int flip;
+	flip = rand() % 2 + 1;// assign random numbers
+				
+	return (flip);
+}
+
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
