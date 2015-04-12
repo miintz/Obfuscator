@@ -65,6 +65,9 @@ public:
 
     int numPeople() { return nTrainFaces; };
 
+	vector<ofxCvGrayscaleImage> faces;
+    vector<ofxCvColorImage> color_faces;
+
 protected:
 
     void mask(ofxCvGrayscaleImage img);
@@ -85,8 +88,6 @@ protected:
 
     double leastDistSq;
 
-    vector<ofxCvGrayscaleImage> faces;
-    vector<ofxCvColorImage> color_faces;
     vector<ofxCvFloatImage> eigens;
 
     vector<ofImage> faceSprites;

@@ -42,16 +42,15 @@ void Particle::reset(){
 
 //------------------------------------------------------------------
 void Particle::update(){
-
-	//1 - APPLY THE FORCES BASED ON WHICH MODE WE ARE IN 
-		
-		ofPoint attractPt(ofGetMouseX(), ofGetMouseY());
-		frc = attractPt-pos; // we get the attraction force/vector by looking at the mouse pos relative to our pos
-		frc.normalize(); //by normalizing we disregard how close the particle is to the attraction point 
-		
-		vel *= drag; //apply drag
-		vel += frc * 0.6; //apply force
 	
+	//ofPoint attractPt(ofGetMouseX(), ofGetMouseY());
+	ofPoint attractPt(faceCurPos.x, faceCurPos.y);
+
+	frc = attractPt-pos; // we get the attraction force/vector by looking at the mouse pos relative to our pos
+	frc.normalize(); //by normalizing we disregard how close the particle is to the attraction point 
+	
+	vel *= drag; //apply drag
+	vel += frc * 0.6; //apply force
 	
 	
 	//2 - UPDATE OUR POSITION
@@ -80,8 +79,11 @@ void Particle::update(){
 }
 
 //------------------------------------------------------------------
-void Particle::draw(std::string text){
+void Particle::draw(std::string text, ofRectangle cur){
 	
+	//we need to update the attractor
+	faceCurPos = cur;
+
 	//ofSetColor(255, 63, 180);			
 	//ofCircle(pos.x, pos.y, scale * 4.0);
 	font.drawString(text, pos.x, pos.y);

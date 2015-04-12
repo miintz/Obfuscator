@@ -14,7 +14,7 @@ class Particle
 
 		void reset();
 		void update();
-		void draw(std::string text);		
+		void draw(std::string text, ofRectangle cur);		
 		
 		ofPoint pos;
 		ofPoint vel;
@@ -25,4 +25,7 @@ class Particle
 		float scale;
 		
 		vector <ofPoint> * attractPoints; 
+	
+	private:
+		ofRectangle faceCurPos;
 };

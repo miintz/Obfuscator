@@ -64,11 +64,11 @@
     <ClCompile Include="..\..\..\addons\ofxVectorGraphics\libs\CreEPS.cpp">
       <Filter>addons\ofxVectorGraphics\libs</Filter>
     </ClCompile>
-    <ClCompile Include="src\RandomStringShenanigans.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\ofxCvFaceRec.cpp" />
     <ClCompile Include="src\Particle.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RandomString.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
@@ -495,11 +495,11 @@
     <ClInclude Include="..\..\..\addons\ofxVectorGraphics\libs\CreEPS_Types.hpp">
       <Filter>addons\ofxVectorGraphics\libs</Filter>
     </ClInclude>
-    <ClInclude Include="src\RandomStringShenanigans.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\ofxCvFaceRec.h" />
     <ClInclude Include="src\Particle.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\RandomString.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

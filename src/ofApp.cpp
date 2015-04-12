@@ -21,6 +21,7 @@ std::string text = "test";
 
 //--------------------------------------------------------------
 void ofApp::setup(){
+
 	//shader
 	//shader.load( "shaderVert.c", "shaderFrag.c" );
 	//fbo.allocate( ofGetWidth(), ofGetHeight() );
@@ -78,25 +79,35 @@ void ofApp::setup(){
 	p.assign(num, Particle());
 	
 	resetParticles();
+
+	//canny edge
+
+	cannygray.allocate(640, 480);  
+	canny.allocate(640, 480); 
+	display.allocate(640,400);
 }
 
 void ofApp::calcFaceSprites() {
     if(!rec.isTrained()) return;
 
     for (int i=0; i<rec.numPeople(); i++) {
-        ofImage masked;
-
-        unsigned char* pixels = rec.getPersonPixels(i);
-        unsigned char* rgba_pixels = new unsigned char[4*PCA_WIDTH*PCA_HEIGHT];
+		ofImage masked;
+		
+        unsigned char* pixels = rec.getPersonPixels(i);        
+		unsigned char* rgba_pixels = new unsigned char[4*PCA_WIDTH*PCA_HEIGHT];
         for(int x=0; x<PCA_WIDTH; x++)
-            for(int y=0; y<PCA_HEIGHT; y++) {
+            for(int y=0; y<PCA_HEIGHT; y++) { //hoeken?
                 rgba_pixels[(x+(y*PCA_WIDTH))*4] = pixels[(x+(y*PCA_WIDTH))*3];
                 rgba_pixels[(x+(y*PCA_WIDTH))*4+1] = pixels[(x+(y*PCA_WIDTH))*3+1];
                 rgba_pixels[(x+(y*PCA_WIDTH))*4+2] = pixels[(x+(y*PCA_WIDTH))*3+2];
                 rgba_pixels[(x+(y*PCA_WIDTH))*4+3] = mask_pixels[x+y*PCA_WIDTH];
             }
-        masked.setFromPixels(rgba_pixels, PCA_WIDTH, PCA_HEIGHT, OF_IMAGE_COLOR_ALPHA);
+        
+
+		masked.setFromPixels(rgba_pixels, PCA_WIDTH, PCA_HEIGHT, OF_IMAGE_COLOR_ALPHA);
+		
         faces.push_back(masked);
+
         delete rgba_pixels;
     };
 }
@@ -107,15 +118,25 @@ void ofApp::update(){
 	
 	if (vidGrabber.isFrameNew())
 	{
-		unsigned char * pixels = vidGrabber.getPixels();
-	
+		unsigned char * pixels = vidGrabber.getPixels();		
+		
+		cvimg.setFromPixels(pixels, camWidth, camHeight);
 		img.setFromPixels(pixels, camWidth, camHeight, OF_IMAGE_COLOR, true);
+
 		test_image.setFromPixels(pixels, camWidth, camHeight, OF_IMAGE_COLOR);
         test_image.resize(camWidth/TEST_DIV, camHeight/TEST_DIV);
         test_image.update();
         finder.findHaarObjects(test_image);
         
 		//finder.findHaarObjects(img);
+		    
+		//canny edge stuff
+		int minVal = 30;
+		int maxVal = 80;
+		
+		cannygray.setFromPixels(pixels, camWidth, camHeight);
+		cvCanny(cannygray.getCvImage(), canny.getCvImage(), minVal,  maxVal, 3);
+		canny.flagImageChanged();		
 	}
 
 	//update particles
@@ -134,22 +155,36 @@ void ofApp::update(){
 
 void ofApp::draw(){
     // draw current video frame to screen (need to change img before drawing or after?)
-	img.draw(0, 0, camWidth*SCALE, camHeight*SCALE);
+	//img.draw(0, 0, camWidth*SCALE, camHeight*SCALE);
 
+	cvimg.dilate();
+	
+	//do some linear blending stuff to make it look a little nicer maybe?
+	double alpha = 0.4;
+	double beta = ( 1.0 - alpha );
+	
+	Mat upper = cvimg.getCvImage();
+	Mat lower = canny.getCvImage();
+	Mat root;
 
-    // display other items (no idea what this is?)
-    if(showTest) test_image.draw(camWidth*SCALE +100, 0);
-	if(showFaces) rec.drawFaces(0, ofGetHeight()*0.8, ofGetWidth());
-	if(showEigens) rec.drawEigens(0, ofGetHeight()*0.9, ofGetWidth());
+	//this gives off an access error or whatever like a big idiot, no clue wtf is happening here
+	//addWeighted(upper, alpha, lower, beta, 0.0, root);
 
+	cvimg.draw(0, 0, camWidth*SCALE, camHeight*SCALE);	
+	//canny.draw(0, 0, camWidth*SCALE, camHeight*SCALE);
+	
+	
 	//hm ok
     int person = -1;
 
     std::ostringstream fr;
     std::ostringstream o;
+	
+	ofRectangle cur;
 
 	for(int i = 0; i < finder.blobs.size(); i++) {
-		ofRectangle cur = finder.blobs[i].boundingRect;
+		
+		cur = finder.blobs[i].boundingRect;
 
         cur.x*=TEST_DIV;
         cur.y*=TEST_DIV;
@@ -162,14 +197,15 @@ void ofApp::draw(){
         int th=cur.height;
 
         unsigned char *img_px = img.getPixels();
-
 		unsigned char *temp = new unsigned char[tw*th*3];
+
 		for (int x=0; x<tw; x++)
             for (int y=0; y<th; y++) {
                 temp[(x+y*tw)*3] = img_px[((x+tx)+(y+ty)*camWidth)*3];
                 temp[(x+y*tw)*3+1] = img_px[((x+tx)+(y+ty)*camWidth)*3+1];
                 temp[(x+y*tw)*3+2] = img_px[((x+tx)+(y+ty)*camWidth)*3+2];
             }
+
         face.setFromPixels(temp, cur.width, cur.height, OF_IMAGE_COLOR);
         delete temp;
 
@@ -179,6 +215,7 @@ void ofApp::draw(){
         gray = color;
 
         unsigned char *pixels = gray.getPixels();
+
         for(int x=0; x<PCA_WIDTH; x++)
             for(int y=0; y<PCA_HEIGHT; y++)
                 if(mask.getPixels()[x+y*PCA_HEIGHT]<=0)
@@ -190,25 +227,10 @@ void ofApp::draw(){
 
         ofSetColor(255, 255, 255, 192);
 
-        if(showExtracted) gray.draw(1120, 25+i*225);
-
+		//cvimg.erode();	
+		
         // super-impose matched face over detected face
-        faces[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);
-
-        // show fit data
-        if(showLeastSq) {
-            o << rec.getLeastDistSq();
-            ofDrawBitmapString(o.str(), cur.x*SCALE, cur.y*SCALE);
-        }
-
-        // show timing
-        if (showClock) {
-            fr << ofGetFrameRate();
-            ofDrawBitmapString(fr.str(), 20, 20);
-        }
-
-        // highlight current face from board of faces
-        if(showFaces) rec.drawHilight(person, 0, ofGetHeight()*0.8, ofGetWidth());
+		faces[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);	
 
         // reset color
         ofSetColor(255, 255, 255, 255);
@@ -216,22 +238,26 @@ void ofApp::draw(){
 	
     float time = ofGetElapsedTimef();
 
-	if(fmod(time, 2.0) < 0.5) //fmod == modulo
+	//only draw strings every now and then...
+	float mod = RandomFloat(0.0,1.0);	
+	if(fmod(time, 2.0) < mod) //fmod == modulo
 	{	
-		//get me some random stringature	
+		//get me some random stringature then
 		std::string res = RandString.gen_random(1);
-	
+				
 		//draw things 
 		for(unsigned int i = 0; i < p.size(); i++){
 			//flip coin first
 			int coin = ofApp::coin();
 			if(coin == 1)
 			{
-				std::string drawer = RandString.gen_random(1);
-				p[i].draw(drawer);
+				std::string drawletter = RandString.gen_random(1);
+				p[i].draw(drawletter, cur);
 			}
 		}		
 	}
+
+	
 }
 
 void ofApp::resetParticles(){
@@ -251,40 +277,6 @@ void ofApp::resetParticles(){
 	}	
 }
 
-
-void ofApp::keyPressed  (int key){
-
-    if(key == 's')
-        face.saveImage("face.tif");
-
-    if (key == 'S') {
-        ofImage screengrab;
-        screengrab.grabScreen(0, 0, ofGetWidth(), ofGetHeight());
-        screengrab.saveImage("screen.tif");
-    };
-
-    if((key == 'e') || (key == 'E'))
-        showEigens = (showEigens == false);
-
-    if((key == 'f') || (key == 'F'))
-        showFaces = (showFaces == false);
-
-    if((key == 't') || (key == 'T'))
-        showTest = (showTest == false);
-
-//    if((key == 'f') || (key == 'F'))
-//        showExtracted = (showExtracted == false);
-
-    if((key == 'l') || (key == 'L'))
-        showLeastSq = (showLeastSq == false);
-
-//    if(((key == 'b') || (key == 'B')) && (!bgSubtract)) {
-//        bgImage.setFromPixels(img.getPixels(), camWidth, camHeight, OF_IMAGE_COLOR);
-//        bgSubtract = true;
-//    }
-
-    }
-
 int ofApp::coin()
 {
 	int flip;
@@ -293,6 +285,12 @@ int ofApp::coin()
 	return (flip);
 }
 
+float ofApp::RandomFloat(float a, float b) {
+    float random = ((float) rand()) / (float) RAND_MAX;
+    float diff = b - a;
+    float r = random * diff;
+    return a + r;
+}
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){

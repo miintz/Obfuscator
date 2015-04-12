@@ -4,7 +4,7 @@
 #include "ofMain.h"
 #include "ofxCvHaarFinder.h"
 #include "ofxCvFaceRec.h"
-#include "RandomStringShenanigans.h"
+#include "RandomString.h"
 
 #define SCALE 2
 #define TEST_DIV 2
@@ -19,17 +19,22 @@ class ofApp : public ofBaseApp{
 		void setup();
 		void update();
 		void draw();
-
-		void keyPressed  (int key);
+	
 		void keyReleased  (int key);
 		
 		void resetParticles();
-        void calcFaceSprites();
+        void calcFaceSprites();		
 		
 		int Displaying_Random_Text(cv::Mat image, char* window_name, cv::RNG rng);
-		int coin();
+		int coin();		
+		float RandomFloat(float a, float b);
 
 		ofTrueTypeFont font;
+
+		ofxCvColorImage cvimg;
+		ofxCvColorImage display;
+		ofxCvGrayscaleImage cannygray;  
+		ofxCvGrayscaleImage canny;  
 
 		ofImage img;
 		ofImage test_image;
@@ -44,18 +49,19 @@ class ofApp : public ofBaseApp{
 		ofTexture videoTexture;
 		int camWidth;
 		int camHeight;
+		int person;
 
 		ofImage face;
         ofxCvColorImage color;
         ofxCvGrayscaleImage gray;
 
-        vector <ofImage> faces;
+		vector <ofImage> faces;
 		//ofShader shader; //Shader
 		//ofFbo fbo; //Buffer for intermediate drawing
 		//ofImage image;
 
-		RandomStringShenanigans RandString;
-
+		RandomString RandString;
+		
 		vector <Particle> p;		
 		vector <ofPoint> attractPoints;
 		vector <ofPoint> attractPointsWithMovement;

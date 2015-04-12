@@ -119,7 +119,7 @@
     <ClCompile Include="..\..\..\addons\ofxVectorGraphics\libs\CreEPS.cpp" />
     <ClCompile Include="src\ofxCvFaceRec.cpp" />
     <ClCompile Include="src\Particle.cpp" />
-    <ClCompile Include="src\RandomStringShenanigans.cpp" />
+    <ClCompile Include="src\RandomString.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\ofApp.h" />
@@ -230,7 +230,7 @@
     <ClInclude Include="..\..\..\addons\ofxVectorGraphics\libs\CreEPS_Types.hpp" />
     <ClInclude Include="src\ofxCvFaceRec.h" />
     <ClInclude Include="src\Particle.h" />
-    <ClInclude Include="src\RandomStringShenanigans.h" />
+    <ClInclude Include="src\RandomString.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\libs\openFrameworksCompiled\project\vs\openframeworksLib.vcxproj">
