@@ -19,6 +19,27 @@ float maxDistance;
 
 std::string text = "test";
 
+/// Edge detection globals  
+Mat srcEdge, srcEdge_gray;  
+Mat dstEdge, detected_edges;  
+   
+int edgeThresh = 1;  
+int lowThreshold;  
+int const max_lowThreshold = 100;  
+int ratio = 3;  
+int kernel_size = 3;     
+   
+/// contour detection globals  
+Mat srcContour; Mat srcContour_gray, drawing;  
+int thresh = 100;  
+int max_thresh = 255;  
+RNG rng(12345);  
+   
+/// blend globals  
+Mat output;  
+double alpha = 0.5;   
+double beta = ( 1.0 - alpha );  
+
 //--------------------------------------------------------------
 void ofApp::setup(){
 
@@ -82,8 +103,8 @@ void ofApp::setup(){
 
 	//canny edge
 
-	cannygray.allocate(640, 480);  
-	canny.allocate(640, 480); 
+	cvimg.allocate(640, 480);
+	cvfinal.allocate(640,480);
 	display.allocate(640,400);
 }
 
@@ -102,11 +123,51 @@ void ofApp::calcFaceSprites() {
                 rgba_pixels[(x+(y*PCA_WIDTH))*4+2] = pixels[(x+(y*PCA_WIDTH))*3+2];
                 rgba_pixels[(x+(y*PCA_WIDTH))*4+3] = mask_pixels[x+y*PCA_WIDTH];
             }
-        
 
-		masked.setFromPixels(rgba_pixels, PCA_WIDTH, PCA_HEIGHT, OF_IMAGE_COLOR_ALPHA);
+       //bgr?
+
+		//masked.setFromPixels(rgba_pixels, PCA_WIDTH, PCA_HEIGHT, OF_IMAGE_COLOR_ALPHA);
 		
-        faces.push_back(masked);
+        //faces.push_back(masked);
+
+		ofxCvColorImage cvmasked;		
+		cvmasked.setFromPixels(pixels, 150, 150);
+		
+		//now we can mess these images up a little, lets create 3 versions
+		//convert frame to Mat object used for edge detection  
+		srcEdge = cv::cvarrToMat(cvmasked.getCvImage());  
+        
+		//convert frame to Mat object used for contour detection  
+		srcContour = cv::cvarrToMat(cvmasked.getCvImage());  
+		//contour detection  
+		
+		//convert image to gray and blur it  
+		cvtColor( srcContour, srcContour_gray, CV_BGR2GRAY );  
+		blur( srcContour_gray, srcContour_gray, cv::Size(3,3) );  
+		
+		ofApp::thresh_callback( 0, 0 );  
+
+		//edge detection  
+		//create a matrix of the same type and size as src (for dst)  
+		dstEdge.create( srcEdge.size(), srcEdge.type() );  
+   
+		//Convert the image to grayscale  
+		cvtColor( srcEdge, srcEdge_gray, CV_BGR2GRAY );  
+   
+		//show image
+		CannyThreshold(0, 0);      
+    
+		// we have two Mat objects to blend - dstEdge and drawing, this shouldnt crash now i think...
+		addWeighted( dstEdge, alpha, drawing, beta, 0.0, output);  
+	
+		//now we have  output mat, we can draw this in draw function (finally ffs)	
+		inter = output;
+		ofxCvColorImage cvblended;
+		cvblended.allocate(150,150);		
+
+		cvblended = &inter;
+
+		cvfaces_blended.push_back(cvblended);
 
         delete rgba_pixels;
     };
@@ -117,7 +178,7 @@ void ofApp::update(){
 	vidGrabber.update();
 	
 	if (vidGrabber.isFrameNew())
-	{
+	{	
 		unsigned char * pixels = vidGrabber.getPixels();		
 		
 		cvimg.setFromPixels(pixels, camWidth, camHeight);
@@ -128,15 +189,7 @@ void ofApp::update(){
         test_image.update();
         finder.findHaarObjects(test_image);
         
-		//finder.findHaarObjects(img);
-		    
-		//canny edge stuff
-		int minVal = 30;
-		int maxVal = 80;
-		
-		cannygray.setFromPixels(pixels, camWidth, camHeight);
-		cvCanny(cannygray.getCvImage(), canny.getCvImage(), minVal,  maxVal, 3);
-		canny.flagImageChanged();		
+		//finder.findHaarObjects(img);		
 	}
 
 	//update particles
@@ -153,26 +206,45 @@ void ofApp::update(){
 
 }
 
+/** @function thresh_callback */  
+ void ofApp::thresh_callback(int, void* )  
+ {  
+	Mat canny_output;  
+	vector<vector<cv::Point> > contours;  
+	vector<Vec4i> hierarchy;  
+   
+	/// Detect edges using canny  
+	Canny( srcContour_gray, canny_output, thresh, thresh*2, 3 );  
+	/// Find contours  
+	findContours( canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );  
+   
+	/// Draw contours  
+	drawing = Mat::zeros( canny_output.size(), CV_8UC3 );  
+	for( int i = 0; i< contours.size(); i++ )  
+	{  
+		Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );  
+		drawContours( drawing, contours, i, color, 2, 8, hierarchy, 0, cv::Point() );  
+	}  
+ }  
+   
+ void ofApp::CannyThreshold(int, void*)  
+ {  
+	/// Reduce noise with a kernel 3x3  
+	blur( srcEdge_gray, detected_edges, cv::Size(3,3) );  
+   
+	/// Canny detector - number has replaced lowThreshold  
+	Canny( detected_edges, detected_edges, 50, lowThreshold*ratio, kernel_size );  
+   
+	/// Using Canny's output as a mask, we display our result  
+	dstEdge = Scalar::all(0);  
+   
+	srcEdge.copyTo( dstEdge, detected_edges);  
+   
+ }  
+
 void ofApp::draw(){
     // draw current video frame to screen (need to change img before drawing or after?)
-	//img.draw(0, 0, camWidth*SCALE, camHeight*SCALE);
-
-	cvimg.dilate();
-	
-	//do some linear blending stuff to make it look a little nicer maybe?
-	double alpha = 0.4;
-	double beta = ( 1.0 - alpha );
-	
-	Mat upper = cvimg.getCvImage();
-	Mat lower = canny.getCvImage();
-	Mat root;
-
-	//this gives off an access error or whatever like a big idiot, no clue wtf is happening here
-	//addWeighted(upper, alpha, lower, beta, 0.0, root);
-
-	cvimg.draw(0, 0, camWidth*SCALE, camHeight*SCALE);	
-	//canny.draw(0, 0, camWidth*SCALE, camHeight*SCALE);
-	
+	img.draw(0, 0, camWidth*SCALE, camHeight*SCALE);	
 	
 	//hm ok
     int person = -1;
@@ -230,7 +302,8 @@ void ofApp::draw(){
 		//cvimg.erode();	
 		
         // super-impose matched face over detected face
-		faces[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);	
+		//faces[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);	
+		cvfaces_blended[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);
 
         // reset color
         ofSetColor(255, 255, 255, 255);

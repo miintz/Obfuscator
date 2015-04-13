@@ -25,21 +25,23 @@ class ofApp : public ofBaseApp{
 		void resetParticles();
         void calcFaceSprites();		
 		
+		void CannyThreshold(int, void*);  
+		void thresh_callback(int, void* );  
+
 		int Displaying_Random_Text(cv::Mat image, char* window_name, cv::RNG rng);
 		int coin();		
 		float RandomFloat(float a, float b);
 
 		ofTrueTypeFont font;
-
+	
 		ofxCvColorImage cvimg;
 		ofxCvColorImage display;
-		ofxCvGrayscaleImage cannygray;  
-		ofxCvGrayscaleImage canny;  
 
 		ofImage img;
 		ofImage test_image;
 		ofImage bgImage;
 		ofImage mask;
+
 		unsigned char *mask_pixels;
 
 		ofxCvHaarFinder finder;
@@ -52,10 +54,16 @@ class ofApp : public ofBaseApp{
 		int person;
 
 		ofImage face;
+		IplImage inter; //used for something idk
         ofxCvColorImage color;
+		ofxCvColorImage cvfinal;
         ofxCvGrayscaleImage gray;
 
 		vector <ofImage> faces;
+		vector <ofxCvColorImage> cvfaces_colors;
+		vector <ofxCvColorImage> cvfaces_edges;
+		vector <ofxCvColorImage> cvfaces_blended;
+
 		//ofShader shader; //Shader
 		//ofFbo fbo; //Buffer for intermediate drawing
 		//ofImage image;
