@@ -2,6 +2,7 @@
 #include "ofxOpenCv.h"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
+
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,9 +47,7 @@ void ofApp::setup(){
 	//soundPlayer
 	facesound.loadSound("facesound2.wav");
 	letters.loadSound("letters.wav");
-
 	
-
 	//shader
 	//shader.load( "shaderVert.c", "shaderFrag.c" );
 	//fbo.allocate( ofGetWidth(), ofGetHeight() );
@@ -68,7 +67,7 @@ void ofApp::setup(){
 	mask.loadImage("mask.png");
     mask.resize(PCA_WIDTH, PCA_HEIGHT);
     mask_pixels = mask.getPixels();
-
+	
     // SETUP FACE RECOGNITION
     rec.learn();
     gray.allocate(PCA_WIDTH, PCA_HEIGHT);
@@ -88,7 +87,7 @@ void ofApp::setup(){
     ofBackground(0,0,0);
     ofEnableAlphaBlending();
     ofHideCursor();	
-
+	
 	ofTrueTypeFont::setGlobalDpi(72);
 
 	font.loadFont("molot.ttf", 32);	
@@ -123,17 +122,39 @@ void ofApp::calcFaceSprites() {
         unsigned char* pixels = rec.getPersonPixels(i);        
 		unsigned char* rgba_pixels = new unsigned char[4*PCA_WIDTH*PCA_HEIGHT];
         for(int x=0; x<PCA_WIDTH; x++)
-            for(int y=0; y<PCA_HEIGHT; y++) { //hoeken?
+            for(int y=0; y<PCA_HEIGHT; y++) { //masking stuff
                 rgba_pixels[(x+(y*PCA_WIDTH))*4] = pixels[(x+(y*PCA_WIDTH))*3];
                 rgba_pixels[(x+(y*PCA_WIDTH))*4+1] = pixels[(x+(y*PCA_WIDTH))*3+1];
                 rgba_pixels[(x+(y*PCA_WIDTH))*4+2] = pixels[(x+(y*PCA_WIDTH))*3+2];
                 rgba_pixels[(x+(y*PCA_WIDTH))*4+3] = mask_pixels[x+y*PCA_WIDTH];
             }
+			
+		masked.setFromPixels(rgba_pixels, PCA_WIDTH, PCA_HEIGHT, OF_IMAGE_COLOR_ALPHA);
+		//now we have pixel data
 
-       //bgr?
 
-		//masked.setFromPixels(rgba_pixels, PCA_WIDTH, PCA_HEIGHT, OF_IMAGE_COLOR_ALPHA);
+
+		//openCV is bgr but our pixel array is in rgb
+		ofxCvColorImage convmasked;		
+		convmasked.allocate(150,150);
+		convmasked.setFromPixels(masked.getPixels(), PCA_WIDTH, PCA_HEIGHT);
+		convmasked.convertRgbToHsv();
+
+
+		ofxCvColorImage recmasked;
+		recmasked.allocate(150,150);
 		
+		Mat recmaskedmat;		
+		Mat convmaskedmat = convmasked.getCvImage();
+
+		cv::cvtColor(convmaskedmat, recmaskedmat, CV_RGBA2BGRA); 
+
+		rgb2bgr_inter = recmaskedmat;
+		recmasked = &rgb2bgr_inter;
+
+		//now we should be able to get the improved pixels..
+		unsigned char * newBgrPixels = convmasked.getPixels();
+
         //faces.push_back(masked);
 
 		ofxCvColorImage cvmasked;		
@@ -152,7 +173,7 @@ void ofApp::calcFaceSprites() {
 		blur( srcContour_gray, srcContour_gray, cv::Size(3,3) );  
 		
 		ofApp::thresh_callback( 0, 0 );  
-
+		
 		//edge detection  
 		//create a matrix of the same type and size as src (for dst)  
 		dstEdge.create( srcEdge.size(), srcEdge.type() );  
@@ -168,7 +189,7 @@ void ofApp::calcFaceSprites() {
 		ofxCvColorImage cvcolors;
 		cvcolors.allocate(150,150);		
 
-		cvcolors = &blended_inter;
+		cvcolors = &colors_inter;
 
 		cvfaces_colors.push_back(cvcolors);
 
@@ -177,16 +198,16 @@ void ofApp::calcFaceSprites() {
 		cvedges.allocate(150,150);		
 
 		cvedges = &edges_inter;
-
+		
 		cvfaces_edges.push_back(cvedges);
 
 		// we have two Mat objects to blend - dstEdge and drawing, this shouldnt crash now i think...
-		addWeighted( dstEdge, alpha, drawing, beta, 0.0, output);  
-	
-		//now we have  output mat, we can draw this in draw function (finally ffs)	
+		addWeighted( dstEdge, alpha, drawing, beta, 0.0, output);  		
+		
+		//huzzah now we can mask this basterd				
 		blended_inter = output;
 		ofxCvColorImage cvblended;
-		cvblended.allocate(150,150);		
+		cvblended.allocate(150,150);
 
 		cvblended = &blended_inter;
 
@@ -195,7 +216,6 @@ void ofApp::calcFaceSprites() {
         delete rgba_pixels;
     };
 }
-
 void ofApp::update(){
 
 	vidGrabber.update();
@@ -267,8 +287,7 @@ void ofApp::update(){
 
 void ofApp::draw(){
     // draw current video frame to screen (need to change img before drawing or after?)
-	img.draw(0, 0, camWidth*SCALE, camHeight*SCALE);	
-	
+
 	//hm ok
     int person = -1;
 	
@@ -322,18 +341,29 @@ void ofApp::draw(){
 
         ofSetColor(255, 255, 255, 192);
 
-		//cvimg.erode();	
-		
-        // super-impose matched face over detected face
-		
-		int coin = ofApp::coin(3);
+		//lets go fucking mental, lets go fucking mental!
+		int distortcoin = ofApp::coin(4);
+		int facecoin = ofApp::coin(3); 
 
-		if(coin == 1)
-			cvfaces_blended[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);
-		else if(coin == 2)
+		if(distortcoin == 1)
+			cvimg.erode();
+		else if(distortcoin == 2)
+			cvimg.dilate();
+		else if(distortcoin == 3)
+			cvimg.blurGaussian(3); //odd numbers here
+		else if(distortcoin == 4)
+			cvimg.contrastStretch();
+		
+		//lalaa lalala, lalaa lalala
+		if(facecoin == 1)		
+			cvfaces_blended[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);			
+		else if(facecoin == 2)
 			cvfaces_colors[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);		
-		else
+		else				
 			cvfaces_edges[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);
+			
+
+		cvimg.draw(0, 0, camWidth*SCALE, camHeight*SCALE);		
 
         // reset color
         ofSetColor(255, 255, 255, 255);
@@ -360,8 +390,6 @@ void ofApp::draw(){
 			}
 		}		
 	}
-
-	
 }
 
 void ofApp::resetParticles(){

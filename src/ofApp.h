@@ -26,8 +26,9 @@ class ofApp : public ofBaseApp{
 		
 		void CannyThreshold(int, void*);  
 		void thresh_callback(int, void* );  
-
+		
 		int Displaying_Random_Text(cv::Mat image, char* window_name, cv::RNG rng);
+		
 		int coin(int mod);			
 
 		float RandomFloat(float a, float b);
@@ -54,11 +55,14 @@ class ofApp : public ofBaseApp{
 		int person;
 
 		ofImage face;
+		
 		IplImage blended_inter; //used for something idk
 		IplImage colors_inter; //used for something idk
 		IplImage edges_inter; //used for something idk
+		IplImage rgb2bgr_inter;		
+		
         ofxCvColorImage color;
-		ofxCvColorImage cvfinal;
+		ofxCvColorImage cvfinal;		
         ofxCvGrayscaleImage gray;
 
 		vector <ofImage> faces;
@@ -71,10 +75,10 @@ class ofApp : public ofBaseApp{
 		//ofImage image;
 
 		RandomString RandString;
-		
+			
 		vector <Particle> p;		
 		vector <ofPoint> attractPoints;
-		vector <ofPoint> attractPointsWithMovement;
+		vector <ofPoint> attractPointsWithMovement;		
 
 		ofSoundPlayer facesound;
 		ofSoundPlayer letters;
