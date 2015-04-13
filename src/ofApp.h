@@ -74,6 +74,9 @@ class ofApp : public ofBaseApp{
 		vector <ofPoint> attractPoints;
 		vector <ofPoint> attractPointsWithMovement;
 
+		ofSoundPlayer facesound;
+		ofSoundPlayer letters;
+
     private:
         // vars to toggle onscreen display
         bool showEigens;

@@ -43,6 +43,12 @@ double beta = ( 1.0 - alpha );
 //--------------------------------------------------------------
 void ofApp::setup(){
 
+	//soundPlayer
+	facesound.loadSound("facesound2.wav");
+	letters.loadSound("letters.wav");
+
+	
+
 	//shader
 	//shader.load( "shaderVert.c", "shaderFrag.c" );
 	//fbo.allocate( ofGetWidth(), ofGetHeight() );
@@ -179,6 +185,7 @@ void ofApp::update(){
 	
 	if (vidGrabber.isFrameNew())
 	{	
+		
 		unsigned char * pixels = vidGrabber.getPixels();		
 		
 		cvimg.setFromPixels(pixels, camWidth, camHeight);
@@ -248,7 +255,7 @@ void ofApp::draw(){
 	
 	//hm ok
     int person = -1;
-
+	
     std::ostringstream fr;
     std::ostringstream o;
 	
@@ -304,7 +311,7 @@ void ofApp::draw(){
         // super-impose matched face over detected face
 		//faces[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);	
 		cvfaces_blended[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);
-
+		
         // reset color
         ofSetColor(255, 255, 255, 255);
 	}
@@ -317,7 +324,7 @@ void ofApp::draw(){
 	{	
 		//get me some random stringature then
 		std::string res = RandString.gen_random(1);
-				
+				letters.play();
 		//draw things 
 		for(unsigned int i = 0; i < p.size(); i++){
 			//flip coin first
