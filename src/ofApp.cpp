@@ -163,15 +163,32 @@ void ofApp::calcFaceSprites() {
 		//show image
 		CannyThreshold(0, 0);      
     
+		//add these mat objects to other lists to create a little bit more chaos
+		colors_inter = drawing;
+		ofxCvColorImage cvcolors;
+		cvcolors.allocate(150,150);		
+
+		cvcolors = &blended_inter;
+
+		cvfaces_colors.push_back(cvcolors);
+
+		edges_inter = dstEdge;
+		ofxCvColorImage cvedges;
+		cvedges.allocate(150,150);		
+
+		cvedges = &edges_inter;
+
+		cvfaces_edges.push_back(cvedges);
+
 		// we have two Mat objects to blend - dstEdge and drawing, this shouldnt crash now i think...
 		addWeighted( dstEdge, alpha, drawing, beta, 0.0, output);  
 	
 		//now we have  output mat, we can draw this in draw function (finally ffs)	
-		inter = output;
+		blended_inter = output;
 		ofxCvColorImage cvblended;
 		cvblended.allocate(150,150);		
 
-		cvblended = &inter;
+		cvblended = &blended_inter;
 
 		cvfaces_blended.push_back(cvblended);
 
@@ -184,8 +201,7 @@ void ofApp::update(){
 	vidGrabber.update();
 	
 	if (vidGrabber.isFrameNew())
-	{	
-		
+	{			
 		unsigned char * pixels = vidGrabber.getPixels();		
 		
 		cvimg.setFromPixels(pixels, camWidth, camHeight);
@@ -309,9 +325,16 @@ void ofApp::draw(){
 		//cvimg.erode();	
 		
         // super-impose matched face over detected face
-		//faces[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);	
-		cvfaces_blended[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);
 		
+		int coin = ofApp::coin(3);
+
+		if(coin == 1)
+			cvfaces_blended[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);
+		else if(coin == 2)
+			cvfaces_colors[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);		
+		else
+			cvfaces_edges[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);
+
         // reset color
         ofSetColor(255, 255, 255, 255);
 	}
@@ -324,11 +347,12 @@ void ofApp::draw(){
 	{	
 		//get me some random stringature then
 		std::string res = RandString.gen_random(1);
-				letters.play();
+		letters.play();
+		
 		//draw things 
 		for(unsigned int i = 0; i < p.size(); i++){
 			//flip coin first
-			int coin = ofApp::coin();
+			int coin = ofApp::coin(2);
 			if(coin == 1)
 			{
 				std::string drawletter = RandString.gen_random(1);
@@ -357,10 +381,10 @@ void ofApp::resetParticles(){
 	}	
 }
 
-int ofApp::coin()
+int ofApp::coin(int mod)
 {
 	int flip;
-	flip = rand() % 2 + 1;// assign random numbers
+	flip = rand() % mod + 1;// assign random numbers
 				
 	return (flip);
 }

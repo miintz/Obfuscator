@@ -18,8 +18,7 @@ class ofApp : public ofBaseApp{
 	public:
 		void setup();
 		void update();
-		void draw();
-	
+		void draw();	
 		void keyReleased  (int key);
 		
 		void resetParticles();
@@ -29,7 +28,8 @@ class ofApp : public ofBaseApp{
 		void thresh_callback(int, void* );  
 
 		int Displaying_Random_Text(cv::Mat image, char* window_name, cv::RNG rng);
-		int coin();		
+		int coin(int mod);			
+
 		float RandomFloat(float a, float b);
 
 		ofTrueTypeFont font;
@@ -54,7 +54,9 @@ class ofApp : public ofBaseApp{
 		int person;
 
 		ofImage face;
-		IplImage inter; //used for something idk
+		IplImage blended_inter; //used for something idk
+		IplImage colors_inter; //used for something idk
+		IplImage edges_inter; //used for something idk
         ofxCvColorImage color;
 		ofxCvColorImage cvfinal;
         ofxCvGrayscaleImage gray;
