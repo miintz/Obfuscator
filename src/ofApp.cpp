@@ -56,7 +56,10 @@ void ofApp::setup(){
     camHeight = CAM_HEIGHT;
 	vidGrabber.setVerbose(true);
 
+	//init for ext. webcam for the prototype
 	//vidGrabber.listDevices();
+	//vidGrabber.setDeviceID(1);
+
 	vidGrabber.initGrabber(camWidth,camHeight);
 	
     // SETUP FACE DETECTION
