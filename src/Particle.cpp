@@ -87,6 +87,8 @@ void Particle::draw(std::string text, ofRectangle cur){
 	//ofSetColor(255, 63, 180);			
 	//ofCircle(pos.x, pos.y, scale * 4.0);
 	font.drawString(text, pos.x, pos.y);
+	font.drawString(text, pos.x + 680, pos.y);
+
 
 }
 

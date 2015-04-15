@@ -6,7 +6,7 @@
 #include "ofxCvFaceRec.h"
 #include "RandomString.h"
 
-#define SCALE 2
+#define SCALE 1
 #define TEST_DIV 2
 #define CAM_WIDTH 640
 #define CAM_HEIGHT 480
@@ -82,6 +82,9 @@ class ofApp : public ofBaseApp{
 
 		ofSoundPlayer facesound;
 		ofSoundPlayer letters;
+
+		ofTexture mirrorTexture;
+		unsigned char * videoMirror;
 
     private:
         // vars to toggle onscreen display
