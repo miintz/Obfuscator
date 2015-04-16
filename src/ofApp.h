@@ -50,15 +50,18 @@ class ofApp : public ofBaseApp{
 
         ofVideoGrabber vidGrabber;
 		ofTexture videoTexture;
+
 		int camWidth;
 		int camHeight;
 		int person;
 
 		ofImage face;
 		
-		IplImage blended_inter; //used for something idk
-		IplImage colors_inter; //used for something idk
-		IplImage edges_inter; //used for something idk
+		IplImage blended_interHalf;
+		IplImage blended_interThreeQ;
+		IplImage blended_interFull;		
+		IplImage colors_inter;
+		IplImage edges_inter;
 		IplImage rgb2bgr_inter;		
 		
         ofxCvColorImage color;
@@ -68,14 +71,20 @@ class ofApp : public ofBaseApp{
 		vector <ofImage> faces;
 		vector <ofxCvColorImage> cvfaces_colors;
 		vector <ofxCvColorImage> cvfaces_edges;
-		vector <ofxCvColorImage> cvfaces_blended;
+		vector <ofxCvColorImage> cvfaces_blendedHalf;
+		vector <ofxCvColorImage> cvfaces_blendedThreeQ;
+		vector <ofxCvColorImage> cvfaces_blendedFull;
 
 		//ofShader shader; //Shader
 		//ofFbo fbo; //Buffer for intermediate drawing
 		//ofImage image;
 
 		RandomString RandString;
-			
+
+		cv::Mat outputHalf;  
+		cv::Mat outputThreeQ;  
+		cv::Mat outputFull;  
+
 		vector <Particle> p;		
 		vector <ofPoint> attractPoints;
 		vector <ofPoint> attractPointsWithMovement;		

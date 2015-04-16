@@ -35,11 +35,6 @@ Mat srcContour; Mat srcContour_gray, drawing;
 int thresh = 100;  
 int max_thresh = 255;  
 RNG rng(12345);  
-   
-/// blend globals  
-Mat output;  
-double alpha = 0.5;   
-double beta = ( 1.0 - alpha );  
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -136,14 +131,11 @@ void ofApp::calcFaceSprites() {
 		masked.setFromPixels(rgba_pixels, PCA_WIDTH, PCA_HEIGHT, OF_IMAGE_COLOR_ALPHA);
 		//now we have pixel data
 
-
-
-		//openCV is bgr but our pixel array is in rgb
+		//openCV is bgr but our pixel array is in rgb so do this to prevent silly things
 		ofxCvColorImage convmasked;		
 		convmasked.allocate(150,150);
 		convmasked.setFromPixels(masked.getPixels(), PCA_WIDTH, PCA_HEIGHT);
 		convmasked.convertRgbToHsv();
-
 
 		ofxCvColorImage recmasked;
 		recmasked.allocate(150,150);
@@ -159,8 +151,6 @@ void ofApp::calcFaceSprites() {
 		//now we should be able to get the improved pixels..
 		unsigned char * newBgrPixels = convmasked.getPixels();
 
-        //faces.push_back(masked);
-
 		ofxCvColorImage cvmasked;		
 		cvmasked.setFromPixels(pixels, 150, 150);
 		
@@ -170,7 +160,6 @@ void ofApp::calcFaceSprites() {
         
 		//convert frame to Mat object used for contour detection  
 		srcContour = cv::cvarrToMat(cvmasked.getCvImage());  
-		//contour detection  
 		
 		//convert image to gray and blur it  
 		cvtColor( srcContour, srcContour_gray, CV_BGR2GRAY );  
@@ -204,18 +193,36 @@ void ofApp::calcFaceSprites() {
 		cvedges = &edges_inter;
 		
 		cvfaces_edges.push_back(cvedges);
-
-		// we have two Mat objects to blend - dstEdge and drawing, this shouldnt crash now i think...
-		addWeighted( dstEdge, alpha, drawing, beta, 0.0, output);  		
 		
-		//huzzah now we can mask this basterd				
-		blended_inter = output;
-		ofxCvColorImage cvblended;
-		cvblended.allocate(150,150);
+		//half alpha
+		double alphaHalf = 0.5;   
+		double betaHalf = ( 1.0 - alphaHalf );  		
+		addWeighted( dstEdge, alphaHalf, drawing, betaHalf, 0.0, outputHalf);  				
+		blended_interHalf = outputHalf;
+		ofxCvColorImage cvblendedHalf;
+		cvblendedHalf.allocate(150,150);
+		cvblendedHalf = &blended_interHalf;
+		cvfaces_blendedHalf.push_back(cvblendedHalf);
 
-		cvblended = &blended_inter;
+		//three quarter alpha
+		double alphaThreeQ = 0.75;   
+		double betaThreeQ = ( 1.0 - alphaThreeQ );  		
+		addWeighted( dstEdge, alphaThreeQ, drawing, betaThreeQ, 0.0, outputThreeQ);  				
+		blended_interThreeQ = outputThreeQ;
+		ofxCvColorImage cvblendedThreeQ;
+		cvblendedThreeQ.allocate(150,150);
+		cvblendedThreeQ = &blended_interThreeQ;
+		cvfaces_blendedThreeQ.push_back(cvblendedThreeQ);
 
-		cvfaces_blended.push_back(cvblended);
+		//full alpha
+		double alphaFull = 1.0;   
+		double betaFull = ( 1.0 - alphaFull );  		
+		addWeighted( dstEdge, alphaFull, drawing, betaFull, 0.0, outputFull);  				
+		blended_interFull = outputFull;
+		ofxCvColorImage cvblendedFull;
+		cvblendedFull.allocate(150,150);
+		cvblendedFull = &blended_interFull;
+		cvfaces_blendedFull.push_back(cvblendedFull);
 
         delete rgba_pixels;
     };
@@ -234,44 +241,45 @@ void ofApp::update(){
 		test_image.setFromPixels(pixels, camWidth, camHeight, OF_IMAGE_COLOR);
         test_image.resize(camWidth/TEST_DIV, camHeight/TEST_DIV);
         test_image.update();
+
         finder.findHaarObjects(test_image);
         
-		//finder.findHaarObjects(img);		
-	}
+		//now mirror the pixels
+		for (int i = 0; i < camHeight; i++) 
+		{
+			for (int j = 0; j < camWidth*3; j+=3) 
+			{
+				// pixel number
+				int pix1 = (i*camWidth*3) + j;
+				int pix2 = (i*camWidth*3) + (j+1);
+				int pix3 = (i*camWidth*3) + (j+2);
+				
+				// mirror pixel number
+				int mir1 = (i*camWidth*3)+1 * (camWidth*3 - j-3);
+				int mir2 = (i*camWidth*3)+1 * (camWidth*3 - j-2);
+				int mir3 = (i*camWidth*3)+1 * (camWidth*3 - j-1);
+				
+				// swap pixels
+				videoMirror[pix1] = pixels[mir1];
+				videoMirror[pix2] = pixels[mir2];
+				videoMirror[pix3] = pixels[mir3];	
+			}
+		}
 
-	if (vidGrabber.isFrameNew()) {
-    unsigned char * pixels = vidGrabber.getPixels();
-    for (int i = 0; i < camHeight; i++) {
-        for (int j = 0; j < camWidth*3; j+=3) {
-            // pixel number
-            int pix1 = (i*camWidth*3) + j;
-            int pix2 = (i*camWidth*3) + (j+1);
-            int pix3 = (i*camWidth*3) + (j+2);
-            // mirror pixel number
-            int mir1 = (i*camWidth*3)+1 * (camWidth*3 - j-3);
-            int mir2 = (i*camWidth*3)+1 * (camWidth*3 - j-2);
-            int mir3 = (i*camWidth*3)+1 * (camWidth*3 - j-1);
-            // swap pixels
-            videoMirror[pix1] = pixels[mir1];
-            videoMirror[pix2] = pixels[mir2];
-            videoMirror[pix3] = pixels[mir3];	
-        }
-    }
-    mirrorTexture.loadData(videoMirror, camWidth, camHeight, GL_RGB);	
-}
+		//mirror it for the cardboard
+		mirrorTexture.loadData(videoMirror, camWidth, camHeight, GL_RGB);	
+	}
 
 	//update particles
 	for(unsigned int i = 0; i < p.size(); i++){
-		//p[i].setMode(currentMode);
 		p[i].update();
 	}
 	
-	//lets add a bit of movement to the attract points
+	//lets add a bit of random movement to the attract points
 	for(unsigned int i = 0; i < attractPointsWithMovement.size(); i++){
 		attractPointsWithMovement[i].x = attractPoints[i].x + ofSignedNoise(i * 10, ofGetElapsedTimef() * 0.7) * 12.0;
 		attractPointsWithMovement[i].y = attractPoints[i].y + ofSignedNoise(i * -10, ofGetElapsedTimef() * 0.7) * 12.0;
 	}	
-
 }
 
 /** @function thresh_callback */  
@@ -320,55 +328,59 @@ void ofApp::draw(){
     std::ostringstream o;
 	
 	ofRectangle cur;
+	int i = 0;	
+	do //we need to run this loop at least once to ensure proper drawing order (cvimg)
+	{		
+		if(finder.blobs.size() != 0)
+		{
+			cur = finder.blobs[i].boundingRect;			
 
-	for(int i = 0; i < finder.blobs.size(); i++) {
-		
-		cur = finder.blobs[i].boundingRect;
+			cur.x*=TEST_DIV;
+			cur.y*=TEST_DIV;
+			cur.width*=TEST_DIV;
+			cur.height*=TEST_DIV;
 
-        cur.x*=TEST_DIV;
-        cur.y*=TEST_DIV;
-        cur.width*=TEST_DIV;
-        cur.height*=TEST_DIV;
+			int tx=cur.x;
+			int ty=cur.y;
+			int tw=cur.width;
+			int th=cur.height;
 
-        int tx=cur.x;
-        int ty=cur.y;
-        int tw=cur.width;
-        int th=cur.height;
+			unsigned char *img_px = img.getPixels();
+			unsigned char *temp = new unsigned char[tw*th*3];
 
-        unsigned char *img_px = img.getPixels();
-		unsigned char *temp = new unsigned char[tw*th*3];
+			for (int x=0; x<tw; x++)
+				for (int y=0; y<th; y++) {
+					temp[(x+y*tw)*3] = img_px[((x+tx)+(y+ty)*camWidth)*3];
+					temp[(x+y*tw)*3+1] = img_px[((x+tx)+(y+ty)*camWidth)*3+1];
+					temp[(x+y*tw)*3+2] = img_px[((x+tx)+(y+ty)*camWidth)*3+2];
+				}
 
-		for (int x=0; x<tw; x++)
-            for (int y=0; y<th; y++) {
-                temp[(x+y*tw)*3] = img_px[((x+tx)+(y+ty)*camWidth)*3];
-                temp[(x+y*tw)*3+1] = img_px[((x+tx)+(y+ty)*camWidth)*3+1];
-                temp[(x+y*tw)*3+2] = img_px[((x+tx)+(y+ty)*camWidth)*3+2];
-            }
+			face.setFromPixels(temp, cur.width, cur.height, OF_IMAGE_COLOR);
+			delete temp;
 
-        face.setFromPixels(temp, cur.width, cur.height, OF_IMAGE_COLOR);
-        delete temp;
+			face.resize(PCA_WIDTH, PCA_HEIGHT);
+			//face.update();
+			color = face.getPixels();
+			gray = color;
 
-        face.resize(PCA_WIDTH, PCA_HEIGHT);
-        //face.update();
-        color = face.getPixels();
-        gray = color;
+			unsigned char *pixels = gray.getPixels();
 
-        unsigned char *pixels = gray.getPixels();
+			for(int x=0; x<PCA_WIDTH; x++)
+				for(int y=0; y<PCA_HEIGHT; y++)
+					if(mask.getPixels()[x+y*PCA_HEIGHT]<=0)
+						pixels[x+y*PCA_HEIGHT]=128;
 
-        for(int x=0; x<PCA_WIDTH; x++)
-            for(int y=0; y<PCA_HEIGHT; y++)
-                if(mask.getPixels()[x+y*PCA_HEIGHT]<=0)
-                    pixels[x+y*PCA_HEIGHT]=128;
+			gray = pixels;
 
-        gray = pixels;
-
-        person=rec.recognize(gray);
+			person=rec.recognize(gray);
+		}
 
         ofSetColor(255, 255, 255, 192);
 
 		//lets go fucking mental, lets go fucking mental!
 		int distortcoin = ofApp::coin(4);
 		int facecoin = ofApp::coin(3); 
+		int subfacecoin = ofApp::coin(3);
 
 		if(distortcoin == 1)
 			cvimg.erode();
@@ -380,21 +392,34 @@ void ofApp::draw(){
 			cvimg.contrastStretch();
 		
 		//lalaa lalala, lalaa lalala
-		if(facecoin == 1)		
-			cvfaces_blended[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);			
-		else if(facecoin == 2)
-			cvfaces_colors[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);		
-		else				
-			cvfaces_edges[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);
-			
+		if(finder.blobs.size() != 0)
+		{
+			if(facecoin == 1)
+			{
+				if(subfacecoin == 1)
+					cvfaces_blendedFull[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);			
+				else if (subfacecoin == 2)
+					cvfaces_blendedThreeQ[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);
+				else
+					cvfaces_blendedHalf[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);
+			}
+			else if(facecoin == 2)
+				cvfaces_colors[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);		
+			else
+				cvfaces_edges[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);		
+		}
 
+		//draw background
 		cvimg.draw(0, 0, camWidth*SCALE, camHeight*SCALE);	
-
+		//draw mirrored background
 		mirrorTexture.draw(camWidth, 0, camWidth, camHeight);
 
         // reset color
         ofSetColor(255, 255, 255, 255);
+
+		i++;
 	}
+	while(i < finder.blobs.size());	
 	
     float time = ofGetElapsedTimef();
 
