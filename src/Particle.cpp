@@ -87,12 +87,20 @@ void Particle::draw(std::string text, ofRectangle cur){
 	//flip coin
 	int coin = Particle::coin(3);
 	if(coin == 1)
+	{
 		atFont.drawString(text, pos.x, pos.y);	
+		atFont.drawString(text, pos.x + 640, pos.y);	
+	}
 	else if(coin == 2)
+	{
 		typeFont.drawString(text, pos.x, pos.y);	
+		typeFont.drawString(text, pos.x + 640, pos.y);	
+	}
 	else
+	{
 		linoFont.drawString(text, pos.x, pos.y);	
-
+		linoFont.drawString(text, pos.x + 640, pos.y);	
+	}
 }
 
 int Particle::coin(int mod)
