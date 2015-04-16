@@ -378,6 +378,7 @@ void ofApp::draw(){
 
 		//draw background
 		cvimg.draw(0, 0, camWidth*SCALE, camHeight*SCALE);	
+		cvimg.draw(640, 0, camWidth*SCALE, camHeight*SCALE);	
 		//draw mirrored background
 		//mirrorTexture.draw(camWidth, 0, camWidth, camHeight);
 
