@@ -56,8 +56,7 @@ void ofApp::setup(){
 	//vidGrabber.setDeviceID(1);
 
 	vidGrabber.initGrabber(camWidth,camHeight);
-	videoMirror = new unsigned char[camWidth*camHeight*3];
-	mirrorTexture.allocate(camWidth, camHeight, GL_RGB);
+	
     // SETUP FACE DETECTION
 	img.loadImage("test.jpg");
 	finder.setup("haarcascade_frontalface_default.xml");
@@ -106,7 +105,6 @@ void ofApp::setup(){
 	resetParticles();
 
 	//canny edge
-
 	cvimg.allocate(640, 480);
 	cvfinal.allocate(640,480);
 	display.allocate(640,400);
@@ -242,32 +240,7 @@ void ofApp::update(){
         test_image.resize(camWidth/TEST_DIV, camHeight/TEST_DIV);
         test_image.update();
 
-        finder.findHaarObjects(test_image);
-        
-		//now mirror the pixels
-		for (int i = 0; i < camHeight; i++) 
-		{
-			for (int j = 0; j < camWidth*3; j+=3) 
-			{
-				// pixel number
-				int pix1 = (i*camWidth*3) + j;
-				int pix2 = (i*camWidth*3) + (j+1);
-				int pix3 = (i*camWidth*3) + (j+2);
-				
-				// mirror pixel number
-				int mir1 = (i*camWidth*3)+1 * (camWidth*3 - j-3);
-				int mir2 = (i*camWidth*3)+1 * (camWidth*3 - j-2);
-				int mir3 = (i*camWidth*3)+1 * (camWidth*3 - j-1);
-				
-				// swap pixels
-				videoMirror[pix1] = pixels[mir1];
-				videoMirror[pix2] = pixels[mir2];
-				videoMirror[pix3] = pixels[mir3];	
-			}
-		}
-
-		//mirror it for the cardboard
-		mirrorTexture.loadData(videoMirror, camWidth, camHeight, GL_RGB);	
+        finder.findHaarObjects(test_image);	
 	}
 
 	//update particles
@@ -412,7 +385,7 @@ void ofApp::draw(){
 		//draw background
 		cvimg.draw(0, 0, camWidth*SCALE, camHeight*SCALE);	
 		//draw mirrored background
-		mirrorTexture.draw(camWidth, 0, camWidth, camHeight);
+		//mirrorTexture.draw(camWidth, 0, camWidth, camHeight);
 
         // reset color
         ofSetColor(255, 255, 255, 255);
