@@ -394,6 +394,39 @@ void ofApp::draw(){
 		//draw background
 		cvimg.draw(0, 0, camWidth*SCALE, camHeight*SCALE);	
 		cvimg.draw(640, 0, camWidth*SCALE, camHeight*SCALE);	
+
+		if(finder.blobs.size() != 0)
+		{
+			if(facecoin == 1)
+			{
+				if(subfacecoin == 1)
+				{
+					cvfaces_blendedFull[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);			
+					cvfaces_blendedFull[person].draw((cur.x*SCALE) + 640, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);			
+				}
+				else if (subfacecoin == 2)
+				{
+					cvfaces_blendedThreeQ[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);
+					cvfaces_blendedHalf[person].draw((cur.x*SCALE) + 640, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);
+				}
+				else
+				{
+					cvfaces_blendedHalf[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);
+					cvfaces_blendedHalf[person].draw((cur.x*SCALE) + 640, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);
+				}
+			}
+			else if(facecoin == 2)
+			{
+				cvfaces_colors[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);		
+				cvfaces_colors[person].draw((cur.x*SCALE) + 640, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);		
+			}
+			else
+			{
+				cvfaces_edges[person].draw(cur.x*SCALE, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);		
+				cvfaces_edges[person].draw((cur.x*SCALE) + 640, cur.y*SCALE, cur.width*SCALE, cur.height*SCALE);		
+			}
+		}
+
 		//draw mirrored background
 		//mirrorTexture.draw(camWidth, 0, camWidth, camHeight);
 
