@@ -88,12 +88,6 @@ void ofApp::setup(){
 	
 	ofTrueTypeFont::setGlobalDpi(72);
 
-	font.loadFont("molot.ttf", 32);	
-	font.setLineHeight(18.0f);
-	font.setLetterSpacing(1.037);
-	 
-	textWidth = font.stringWidth(text);
-    textHeight = font.stringHeight(text);
 	
 	//particles 
 

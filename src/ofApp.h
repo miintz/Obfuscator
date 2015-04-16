@@ -33,7 +33,6 @@ class ofApp : public ofBaseApp{
 
 		float RandomFloat(float a, float b);
 
-		ofTrueTypeFont font;
 	
 		ofxCvColorImage cvimg;
 		ofxCvColorImage display;

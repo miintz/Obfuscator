@@ -6,9 +6,9 @@ Particle::Particle(){
 	
 	ofTrueTypeFont::setGlobalDpi(72);
 
-	font.loadFont("molot.ttf", 32);	
-	font.setLineHeight(18.0f);
-	font.setLetterSpacing(1.037);
+	linoFont.loadFont("linowrite.ttf", 72, true, true, true);	
+	typeFont.loadFont("typewriter.ttf", 72, true, true, true);	
+	atFont.loadFont("atwriter.ttf", 72, true, true, true);	
 }
 
 
@@ -54,10 +54,8 @@ void Particle::update(){
 	
 	
 	//2 - UPDATE OUR POSITION
-	
 	pos += vel; 
-	
-	
+		
 	//3 - (optional) LIMIT THE PARTICLES TO STAY ON SCREEN 
 	//we could also pass in bounds to check - or alternatively do this at the ofApp level
 	if( pos.x > ofGetWidth() ){
@@ -75,7 +73,6 @@ void Particle::update(){
 		pos.y = 0;
 		vel.y *= -1.0;
 	}	
-		
 }
 
 //------------------------------------------------------------------
@@ -84,11 +81,24 @@ void Particle::draw(std::string text, ofRectangle cur){
 	//we need to update the attractor
 	faceCurPos = cur;
 
-	//ofSetColor(255, 63, 180);			
-	//ofCircle(pos.x, pos.y, scale * 4.0);
-	font.drawString(text, pos.x, pos.y);
-	font.drawString(text, pos.x + 680, pos.y);
+	//random tint
+	ofSetColor(ofRandom(25,255));
 
+	//flip coin
+	int coin = Particle::coin(3);
+	if(coin == 1)
+		atFont.drawString(text, pos.x, pos.y);	
+	else if(coin == 2)
+		typeFont.drawString(text, pos.x, pos.y);	
+	else
+		linoFont.drawString(text, pos.x, pos.y);	
 
 }
 
+int Particle::coin(int mod)
+{
+	int flip;
+	flip = rand() % mod + 1;// assign random numbers
+				
+	return (flip);
+}
