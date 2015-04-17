@@ -52,7 +52,7 @@ void ofApp::setup(){
 	vidGrabber.setVerbose(true);
 
 	//init for ext. webcam for the prototype
-	//vidGrabber.listDevices();
+	vidGrabber.listDevices();
 	//vidGrabber.setDeviceID(1);
 
 	vidGrabber.initGrabber(camWidth,camHeight);
